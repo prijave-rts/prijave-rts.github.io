@@ -1,25 +1,29 @@
-// --- CONFIGURATION --- (Keep as before)
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec';
+// --- CONFIGURATION ---
+const WEB_APP_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; // IMPORTANT: Replace with your actual URL
 const JSON_FETCH_URL = WEB_APP_URL;
+
+// Thresholds for status colors (match the legend in index.html)
 const CRITICAL_THRESHOLD = 50;
 const LOW_THRESHOLD = 150;
+
+// Refresh interval in milliseconds (e.g., 5 minutes = 300000)
 const REFRESH_INTERVAL = 300000;
-const CHART_MAX_VALUE = LOW_THRESHOLD + 50;
+
+// Chart Scaling Configuration
+// Option 1: Fixed Max Value (provides consistent scale)
+const CHART_MAX_VALUE = LOW_THRESHOLD + 50; // e.g., 200 - Adjust if counts often exceed this
+// Option 2: Dynamic Max Value (set CHART_MAX_VALUE = null; below to enable)
+// const CHART_MAX_VALUE = null;
+
 // --- END CONFIGURATION ---
 
-// Get references to HTML elements (USING CORRECT IDs)
-const takovskaTodayChart = document.getElementById('takovska-today-chart'); // Correct ID
-const takovskaTomorrowChart = document.getElementById('takovska-tomorrow-chart'); // Correct ID
-const kosutnjakTodayChart = document.getElementById('kosutnjak-today-chart'); // Correct ID
-const kosutnjakTomorrowChart = document.getElementById('kosutnjak-tomorrow-chart'); // Correct ID
+// Get references to HTML elements
+const takovskaTodayChart = document.getElementById('takovska-today-chart');
+const takovskaTomorrowChart = document.getElementById('takovska-tomorrow-chart');
+const kosutnjakTodayChart = document.getElementById('kosutnjak-today-chart');
+const kosutnjakTomorrowChart = document.getElementById('kosutnjak-tomorrow-chart');
 const lastUpdatedSpan = document.getElementById('last-updated');
-// This array now correctly references the variables above
 const allChartAreas = [takovskaTodayChart, takovskaTomorrowChart, kosutnjakTodayChart, kosutnjakTomorrowChart];
-
-// --- Rest of your script.js (getStatusClass, displayShifts, fetchData, etc.) remains the same ---
-// Make sure that inside displayShifts and fetchData, you are consistently using
-// takovskaTodayChart, takovskaTomorrowChart, etc., which you already are.
-// The error happened because the initial variable assignment was using the old wrong IDs.
 
 /**
  * Determines the CSS class based on the count and thresholds.
@@ -64,7 +68,6 @@ function displayShifts(data) {
 
     // --- Prepare Data and Dates ---
     const locations = {
-        // Reference the correctly named variables
         takovska: { todayChart: takovskaTodayChart, tomorrowChart: takovskaTomorrowChart, data: data.shifts.takovska || {} },
         kosutnjak: { todayChart: kosutnjakTodayChart, tomorrowChart: kosutnjakTomorrowChart, data: data.shifts.kosutnjak || {} }
     };
@@ -76,8 +79,8 @@ function displayShifts(data) {
     const days = [{ dateStr: todayStr, isToday: true }, { dateStr: tomorrowStr, isToday: false }];
 
     // --- Determine Max Value for Scaling Bars ---
-    let currentMaxValue = CHART_MAX_VALUE; // Start with configured value
-    if (currentMaxValue === null) { // Calculate dynamic max if fixed value is not set
+    let currentMaxValue = CHART_MAX_VALUE;
+    if (currentMaxValue === null) {
          let dynamicMax = 1;
          days.forEach(day => {
              const datePrefix = day.dateStr;
@@ -90,26 +93,26 @@ function displayShifts(data) {
              }
          });
          currentMaxValue = Math.ceil(dynamicMax * 1.1);
-         currentMaxValue = Math.max(currentMaxValue, 10);
+         currentMaxValue = Math.max(currentMaxValue, 10); // Ensure a minimum scale
          console.log("Dynamic Max Count for Scaling:", currentMaxValue);
     }
 
 
     // --- Generate Bars ---
-    for (const locKey in locations) {
+    for (const locKey in locations) { // Outer loop (for...in)
         const loc = locations[locKey];
 
-        days.forEach(dayInfo => {
-             // Use the correctly named variables to get the container
+        days.forEach(dayInfo => { // Middle loop (forEach)
             const container = dayInfo.isToday ? loc.todayChart : loc.tomorrowChart;
             if (!container) {
                 console.warn(`Container not found for ${locKey} / ${dayInfo.isToday ? 'today' : 'tomorrow'}`);
-                continue;
+                // Use 'return' here to skip this iteration of the forEach callback
+                return; // <<<<<<< CORRECT WAY TO SKIP IN forEach
             }
 
             const locationData = loc.data;
 
-            for (let hour = 0; hour < 24; hour++) {
+            for (let hour = 0; hour < 24; hour++) { // Inner loop (for)
                 const hourStr = hour.toString().padStart(2, '0');
                 const key = `${dayInfo.dateStr}_${hourStr}`;
                 const count = locationData.hasOwnProperty(key) ? Number(locationData[key]) || 0 : 0;
@@ -132,10 +135,10 @@ function displayShifts(data) {
                 barWrapper.appendChild(bar);
                 barWrapper.appendChild(label);
                 container.appendChild(barWrapper);
-            }
-        });
-    }
-}
+            } // End hour loop
+        }); // End day loop (forEach)
+    } // End location loop
+} // End displayShifts function
 
 
 /**
@@ -187,7 +190,7 @@ async function fetchData() {
     console.error('Fetch Data Error:', error);
     lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
     const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
-     allChartAreas.forEach(div => { // Use the correct array here
+     allChartAreas.forEach(div => {
         if(div) div.innerHTML = errorMsg;
      });
   }
