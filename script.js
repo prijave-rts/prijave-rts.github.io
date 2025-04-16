@@ -30,7 +30,7 @@ const allChartAreas = [takovskaTodayChart, takovskaTomorrowChart, kosutnjakToday
  */
 function getStatusClass(count) {
   const numericCount = Number(count);
-  if (isNaN(numericCount)) return 'status-unknown';
+  if (isNaN(numericCount)) return 'status-unknown'; // Class for unknown/NaN counts
   if (numericCount < CRITICAL_THRESHOLD) return 'status-critical';
   if (numericCount < LOW_THRESHOLD) return 'status-low';
   return 'status-ok';
@@ -49,6 +49,8 @@ function displayShifts(data) {
         lastUpdatedSpan.textContent = "Greška";
         return;
     }
+    // Log the entire data structure received from the fetch
+    console.log("displayShifts received data:", JSON.stringify(data, null, 2));
 
     // --- Update Timestamp ---
     try {
@@ -80,20 +82,23 @@ function displayShifts(data) {
 
     // --- Determine Max Value for Scaling Bars ---
     let currentMaxValue = CHART_MAX_VALUE;
-    if (currentMaxValue === null) {
-         let dynamicMax = 1;
+    if (currentMaxValue === null) { // Calculate dynamic max if fixed value is not set
+         let dynamicMax = 1; // Avoid division by zero, ensure at least 1
          days.forEach(day => {
              const datePrefix = day.dateStr;
              for (let hour = 0; hour < 24; hour++) {
                  const key = `${datePrefix}_${hour.toString().padStart(2, '0')}`;
+                 // Check count in both locations for this hour key
                  const takovskaCount = locations.takovska.data.hasOwnProperty(key) ? Number(locations.takovska.data[key]) : 0;
                  const kosutnjakCount = locations.kosutnjak.data.hasOwnProperty(key) ? Number(locations.kosutnjak.data[key]) : 0;
                  if (!isNaN(takovskaCount)) dynamicMax = Math.max(dynamicMax, takovskaCount);
                  if (!isNaN(kosutnjakCount)) dynamicMax = Math.max(dynamicMax, kosutnjakCount);
              }
          });
+         // Add some padding (e.g., 10%) to the dynamic max so bars don't always hit 100%
          currentMaxValue = Math.ceil(dynamicMax * 1.1);
-         currentMaxValue = Math.max(currentMaxValue, 10); // Ensure a minimum scale
+         // Ensure a minimum max value if counts are very low
+         currentMaxValue = Math.max(currentMaxValue, 10); // Example minimum scale
          console.log("Dynamic Max Count for Scaling:", currentMaxValue);
     }
 
@@ -107,22 +112,36 @@ function displayShifts(data) {
             if (!container) {
                 console.warn(`Container not found for ${locKey} / ${dayInfo.isToday ? 'today' : 'tomorrow'}`);
                 // Use 'return' here to skip this iteration of the forEach callback
-                return; // <<<<<<< CORRECT WAY TO SKIP IN forEach
+                return; // Correct way to skip in forEach
             }
 
             const locationData = loc.data;
+             // Log the specific data being used for this location (can be verbose)
+             // console.log(`Data for ${locKey}:`, JSON.stringify(locationData));
+
 
             for (let hour = 0; hour < 24; hour++) { // Inner loop (for)
                 const hourStr = hour.toString().padStart(2, '0');
                 const key = `${dayInfo.dateStr}_${hourStr}`;
+                // Log the key being checked
+                // console.log(`Checking Key: ${key} for Location: ${locKey}`);
+
+
+                // Retrieve count safely, defaulting to 0
                 const count = locationData.hasOwnProperty(key) ? Number(locationData[key]) || 0 : 0;
+                // Log the retrieved value and count
+                // console.log(`Value for key ${key}:`, locationData.hasOwnProperty(key) ? locationData[key] : 'Key Not Found', `-> Count: ${count}`);
+
                 const statusClass = getStatusClass(count);
                 const heightPercent = currentMaxValue > 0 ? Math.min(100, Math.max(0, (count / currentMaxValue) * 100)) : 0;
+                // Log status and height
+                // console.log(`Status: ${statusClass}, Height%: ${heightPercent}`);
+
 
                 const barWrapper = document.createElement('div');
                 barWrapper.classList.add('bar-wrapper');
                 const nextHour = (hour + 1) % 24;
-                barWrapper.title = `Sat: ${hourStr}:00-${nextHour.toString().padStart(2, '0')}:00\nBroj prijavljenih: ${count}`;
+                barWrapper.title = `Sat: ${hourStr}:00-${nextHour.toString().padStart(2, '0')}:00\nBroj prijavljenih: ${count}`; // Tooltip
 
                 const bar = document.createElement('div');
                 bar.classList.add('bar', statusClass);
@@ -130,7 +149,13 @@ function displayShifts(data) {
 
                 const label = document.createElement('div');
                 label.classList.add('bar-label');
-                label.textContent = `${hourStr}h`;
+                // Conditionally show label (e.g., every 3 hours) to prevent overlap
+                if (hour % 3 === 0) {
+                     label.textContent = `${hourStr}h`;
+                } else {
+                     label.innerHTML = ' '; // Use non-breaking space to maintain height/layout if needed
+                }
+
 
                 barWrapper.appendChild(bar);
                 barWrapper.appendChild(label);
@@ -148,17 +173,23 @@ async function fetchData() {
   const url = `${JSON_FETCH_URL}${JSON_FETCH_URL.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
   console.log("Fetching data from Web App:", url);
 
-  // Show loading placeholders
+  // Show loading placeholders before fetching
   allChartAreas.forEach(div => {
-      if(div && !div.querySelector('.loading-placeholder')) {
+      // Add placeholder only if the div exists and doesn't already contain one (or an error message)
+      if(div && !div.querySelector('.loading-placeholder') && !div.textContent.includes('Greška')) {
           div.innerHTML = '<div class="loading-placeholder"><p>Učitavanje...</p></div>';
+      } else if (div && div.querySelector('.loading-placeholder')) {
+          // Optional: Update existing placeholder text
+          // div.querySelector('.loading-placeholder p').textContent = 'Ponovno učitavanje...';
       }
   });
 
   try {
+    // Fetch data with no-store cache directive
     const response = await fetch(url, { cache: "no-store" });
     console.log(`Fetch response status: ${response.status} ${response.statusText}`);
 
+    // Handle HTTP errors
     if (!response.ok) {
       let errorText = `Status: ${response.status}`;
       try { errorText = await response.text(); console.error("Error response text:", errorText); }
@@ -166,40 +197,54 @@ async function fetchData() {
       throw new Error(`HTTP error fetching JSON from Web App! ${errorText}`);
     }
 
+    // Check content type header
     const contentType = response.headers.get("content-type");
     console.log("Received content type:", contentType);
 
     let data;
+    // Process response based on content type
     if (contentType && contentType.toLowerCase().includes("application/json")) {
-       data = await response.json();
+       data = await response.json(); // Parse as JSON
     } else {
-       console.warn(`Received non-JSON content type: ${contentType}.`);
+       // If not JSON, log the text and try parsing
+       console.warn(`Received non-JSON content type: ${contentType}. Attempting to parse...`);
        const textResponse = await response.text();
        console.warn("Web App Response Text:", textResponse);
        try {
          data = JSON.parse(textResponse);
-         if (data && data.error) throw new Error(`Web App returned error: ${data.details || data.error}`);
+         // Check if it's the specific error structure from our doGet function
+         if (data && data.error) {
+            throw new Error(`Web App returned error: ${data.details || data.error}`);
+         }
+         console.log("Successfully parsed non-JSON response as JSON.");
        } catch (parseError) {
-         throw new Error(`Failed to parse non-JSON response. Starts with: ${textResponse.substring(0, 100)}...`);
+         // Throw a more specific error if parsing failed
+         throw new Error(`Failed to parse non-JSON response. Response starts with: ${textResponse.substring(0, 100)}...`);
        }
     }
-    console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200));
+
+    // Call function to update the charts with potentially parsed data
     displayShifts(data);
 
   } catch (error) {
-    console.error('Fetch Data Error:', error);
+    // Catch any errors during fetch or processing
+    console.error('Fetch Data Error:', error); // Log the full error object
     lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
+    // Display error message in the chart areas
     const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
      allChartAreas.forEach(div => {
         if(div) div.innerHTML = errorMsg;
      });
   }
-}
+} // End fetchData function
 
 // --- Initial Load & Auto-Refresh Setup ---
+// Add event listener to run fetchData once the basic HTML structure is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Initializing fetch...");
-    fetchData();
+    fetchData(); // Perform the initial data fetch
 });
+
+// Set up interval to automatically refresh data periodically
 const refreshIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
 console.log(`Auto-refresh set every ${REFRESH_INTERVAL / 1000} seconds.`);
