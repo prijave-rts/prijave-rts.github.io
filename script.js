@@ -4,8 +4,8 @@ const JSON_FETCH_URL = WEB_APP_URL;
 const CRITICAL_THRESHOLD = 50;
 const LOW_THRESHOLD = 150;
 const REFRESH_INTERVAL = 300000;
-const CHART_MAX_VALUE = LOW_THRESHOLD + 50; // Using fixed max value
-// const CHART_MAX_VALUE = null; // To enable dynamic max value
+const CHART_MAX_VALUE = LOW_THRESHOLD + 50;
+// const CHART_MAX_VALUE = null; // Enable for dynamic max
 // --- END CONFIGURATION ---
 
 // Get references to HTML elements (Keep as before)
@@ -57,16 +57,25 @@ function displayShifts(data) {
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
     const days = [{ dateStr: todayStr, isToday: true }, { dateStr: tomorrowStr, isToday: false }];
 
-    // --- Determine Max Value --- (Keep as before, ensure logging is present if dynamic)
+    // --- Determine Max Value --- (Keep as before)
     let currentMaxValue = CHART_MAX_VALUE;
-    if (currentMaxValue === null) {
+    if (currentMaxValue === null) { /* ... dynamic calculation ... */
          let dynamicMax = 1;
-         days.forEach(day => { /* ... calculation ... */ });
+         days.forEach(day => {
+             const datePrefix = day.dateStr;
+             for (let hour = 0; hour < 24; hour++) {
+                 const key = `${datePrefix}_${hour.toString().padStart(2, '0')}`;
+                 const takovskaCount = locations.takovska.data.hasOwnProperty(key) ? Number(locations.takovska.data[key]) : 0;
+                 const kosutnjakCount = locations.kosutnjak.data.hasOwnProperty(key) ? Number(locations.kosutnjak.data[key]) : 0;
+                 if (!isNaN(takovskaCount)) dynamicMax = Math.max(dynamicMax, takovskaCount);
+                 if (!isNaN(kosutnjakCount)) dynamicMax = Math.max(dynamicMax, kosutnjakCount);
+             }
+         });
          currentMaxValue = Math.ceil(dynamicMax * 1.1);
          currentMaxValue = Math.max(currentMaxValue, 10);
          console.log("Dynamic Max Count for Scaling:", currentMaxValue);
     } else {
-         console.log("Using Fixed Max Count for Scaling:", currentMaxValue); // Log fixed value
+         console.log("Using Fixed Max Count for Scaling:", currentMaxValue);
     }
 
 
@@ -81,40 +90,43 @@ function displayShifts(data) {
             for (let hour = 0; hour < 24; hour++) {
                 const hourStr = hour.toString().padStart(2, '0');
                 const key = `${dayInfo.dateStr}_${hourStr}`;
-
-                // *** DETAILED LOGGING FOR COUNT AND HEIGHT ***
                 const count = locationData.hasOwnProperty(key) ? Number(locationData[key]) || 0 : 0;
                 const statusClass = getStatusClass(count);
-                // Ensure currentMaxValue is positive before calculating percentage
                 const heightPercent = currentMaxValue > 0 ? Math.min(100, Math.max(0, (count / currentMaxValue) * 100)) : 0;
 
-                // Log only if count > 0 to avoid flooding console, or log all if needed
-                // if (count > 0) {
-                    console.log(`[${locKey} - ${key}] Count: ${count} (Raw: ${locationData.hasOwnProperty(key) ? locationData[key] : 'N/A'}), MaxValue: ${currentMaxValue}, Height%: ${heightPercent.toFixed(2)}`);
-                // }
-                // *** END DETAILED LOGGING ***
-
+                // *** Create Elements ***
                 const barWrapper = document.createElement('div');
                 barWrapper.classList.add('bar-wrapper');
                 const nextHour = (hour + 1) % 24;
                 barWrapper.title = `Sat: ${hourStr}:00-${nextHour.toString().padStart(2, '0')}:00\nBroj prijavljenih: ${count}`;
 
+                // --- Create Count Value Element ---
+                const countValue = document.createElement('div'); // Use div for easier block styling
+                countValue.classList.add('bar-count-value');
+                // Only show count if > 0 to avoid clutter
+                if (count > 0) {
+                    countValue.textContent = count;
+                } else {
+                    countValue.innerHTML = ' '; // Use space to maintain layout consistency if needed
+                }
+                // --- End Count Value Element ---
+
                 const bar = document.createElement('div');
                 bar.classList.add('bar', statusClass);
-                 // Ensure the style is applied correctly
-                 if (isNaN(heightPercent)) {
+                if (isNaN(heightPercent)) {
                     console.error(`Calculated heightPercent is NaN for key ${key}. Count: ${count}, MaxValue: ${currentMaxValue}`);
-                    bar.style.height = '0%'; // Default to 0 if NaN
+                    bar.style.height = '0%';
                  } else {
                     bar.style.height = `${heightPercent}%`;
                  }
-
 
                 const label = document.createElement('div');
                 label.classList.add('bar-label');
                 if (hour % 3 === 0) label.textContent = `${hourStr}h`;
                 else label.innerHTML = ' ';
 
+                // *** Append Elements in Order: Count, Bar, Label ***
+                barWrapper.appendChild(countValue);
                 barWrapper.appendChild(bar);
                 barWrapper.appendChild(label);
                 container.appendChild(barWrapper);
@@ -123,56 +135,46 @@ function displayShifts(data) {
     }
 } // End displayShifts function
 
-
 // --- fetchData function remains the same ---
-async function fetchData() {
-  const url = `${JSON_FETCH_URL}${JSON_FETCH_URL.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
-  console.log("Fetching data from Web App:", url);
-
-  allChartAreas.forEach(div => {
-      if(div && !div.querySelector('.loading-placeholder') && !div.textContent.includes('Greška')) {
-          div.innerHTML = '<div class="loading-placeholder"><p>Učitavanje...</p></div>';
-      }
-  });
-
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-    console.log(`Fetch response status: ${response.status} ${response.statusText}`);
-    if (!response.ok) { /* ... error handling ... */
-       let errorText = `Status: ${response.status}`;
-       try { errorText = await response.text(); console.error("Error response text:", errorText); }
-       catch (textError) { console.error("Could not read error response text."); }
-       throw new Error(`HTTP error fetching JSON from Web App! ${errorText}`);
+async function fetchData() { /* ... Keep as before ... */
+    const url = `${JSON_FETCH_URL}${JSON_FETCH_URL.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+    console.log("Fetching data from Web App:", url);
+    allChartAreas.forEach(div => { if(div && !div.querySelector('.loading-placeholder') && !div.textContent.includes('Greška')) { div.innerHTML = '<div class="loading-placeholder"><p>Učitavanje...</p></div>'; }});
+    try {
+        const response = await fetch(url, { cache: "no-store" });
+        console.log(`Fetch response status: ${response.status} ${response.statusText}`);
+        if (!response.ok) { /* ... error handling ... */
+           let errorText = `Status: ${response.status}`;
+           try { errorText = await response.text(); console.error("Error response text:", errorText); }
+           catch (textError) { console.error("Could not read error response text."); }
+           throw new Error(`HTTP error fetching JSON from Web App! ${errorText}`);
+        }
+        const contentType = response.headers.get("content-type");
+        console.log("Received content type:", contentType);
+        let data;
+        if (contentType && contentType.toLowerCase().includes("application/json")) { data = await response.json(); }
+        else { /* ... non-json handling ... */
+           console.warn(`Received non-JSON content type: ${contentType}.`);
+           const textResponse = await response.text();
+           console.warn("Web App Response Text:", textResponse);
+           try {
+             data = JSON.parse(textResponse);
+             if (data && data.error) throw new Error(`Web App returned error: ${data.details || data.error}`);
+           } catch (parseError) {
+             throw new Error(`Failed to parse non-JSON response. Starts with: ${textResponse.substring(0, 100)}...`);
+           }
+        }
+        console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200));
+        displayShifts(data);
+    } catch (error) { /* ... error handling ... */
+        console.error('Fetch Data Error:', error);
+        lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
+        const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
+        allChartAreas.forEach(div => { if(div) div.innerHTML = errorMsg; });
     }
-    const contentType = response.headers.get("content-type");
-    console.log("Received content type:", contentType);
-    let data;
-    if (contentType && contentType.toLowerCase().includes("application/json")) {
-       data = await response.json();
-    } else { /* ... non-json handling ... */
-       console.warn(`Received non-JSON content type: ${contentType}.`);
-       const textResponse = await response.text();
-       console.warn("Web App Response Text:", textResponse);
-       try {
-         data = JSON.parse(textResponse);
-         if (data && data.error) throw new Error(`Web App returned error: ${data.details || data.error}`);
-       } catch (parseError) {
-         throw new Error(`Failed to parse non-JSON response. Starts with: ${textResponse.substring(0, 100)}...`);
-       }
-    }
-    // Log snippet AFTER successful parsing
-    console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200));
-    displayShifts(data); // Call display with parsed data
-
-  } catch (error) { /* ... error handling ... */
-    console.error('Fetch Data Error:', error);
-    lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
-    const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
-     allChartAreas.forEach(div => { if(div) div.innerHTML = errorMsg; });
-  }
 }
 
-// --- Initial Load & Auto-Refresh --- (Keep as before)
+// --- Initial Load & Auto-Refresh Setup --- (Keep as before)
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Initializing fetch...");
     fetchData();
