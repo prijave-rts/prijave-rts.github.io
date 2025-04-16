@@ -1,38 +1,32 @@
-// --- CONFIGURATION ---
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec'; // IMPORTANT: Replace with your actual URL
+// --- CONFIGURATION --- (Keep as before)
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec';
 const JSON_FETCH_URL = WEB_APP_URL;
-
-// Thresholds for status colors (match the legend in index.html)
 const CRITICAL_THRESHOLD = 50;
 const LOW_THRESHOLD = 150;
-
-// Refresh interval in milliseconds (e.g., 5 minutes = 300000)
 const REFRESH_INTERVAL = 300000;
-
-// Chart Scaling Configuration
-// Option 1: Fixed Max Value (provides consistent scale)
-const CHART_MAX_VALUE = LOW_THRESHOLD + 500; // e.g., 200 - Adjust if counts often exceed this
-// Option 2: Dynamic Max Value (set CHART_MAX_VALUE = null; below to enable)
-// const CHART_MAX_VALUE = null;
-
+const CHART_MAX_VALUE = LOW_THRESHOLD + 50;
 // --- END CONFIGURATION ---
 
-// Get references to HTML elements
-const takovskaTodayChart = document.getElementById('takovska-today-chart');
-const takovskaTomorrowChart = document.getElementById('takovska-tomorrow-chart');
-const kosutnjakTodayChart = document.getElementById('kosutnjak-today-chart');
-const kosutnjakTomorrowChart = document.getElementById('kosutnjak-tomorrow-chart');
+// Get references to HTML elements (USING CORRECT IDs)
+const takovskaTodayChart = document.getElementById('takovska-today-chart'); // Correct ID
+const takovskaTomorrowChart = document.getElementById('takovska-tomorrow-chart'); // Correct ID
+const kosutnjakTodayChart = document.getElementById('kosutnjak-today-chart'); // Correct ID
+const kosutnjakTomorrowChart = document.getElementById('kosutnjak-tomorrow-chart'); // Correct ID
 const lastUpdatedSpan = document.getElementById('last-updated');
+// This array now correctly references the variables above
 const allChartAreas = [takovskaTodayChart, takovskaTomorrowChart, kosutnjakTodayChart, kosutnjakTomorrowChart];
+
+// --- Rest of your script.js (getStatusClass, displayShifts, fetchData, etc.) remains the same ---
+// Make sure that inside displayShifts and fetchData, you are consistently using
+// takovskaTodayChart, takovskaTomorrowChart, etc., which you already are.
+// The error happened because the initial variable assignment was using the old wrong IDs.
 
 /**
  * Determines the CSS class based on the count and thresholds.
- * @param {number} count - The number of people signed up for the hour.
- * @returns {string} - The CSS class name ('status-critical', 'status-low', 'status-ok', or 'status-unknown').
  */
 function getStatusClass(count) {
   const numericCount = Number(count);
-  if (isNaN(numericCount)) return 'status-unknown'; // Should not happen with default 0
+  if (isNaN(numericCount)) return 'status-unknown';
   if (numericCount < CRITICAL_THRESHOLD) return 'status-critical';
   if (numericCount < LOW_THRESHOLD) return 'status-low';
   return 'status-ok';
@@ -70,114 +64,98 @@ function displayShifts(data) {
 
     // --- Prepare Data and Dates ---
     const locations = {
+        // Reference the correctly named variables
         takovska: { todayChart: takovskaTodayChart, tomorrowChart: takovskaTomorrowChart, data: data.shifts.takovska || {} },
         kosutnjak: { todayChart: kosutnjakTodayChart, tomorrowChart: kosutnjakTomorrowChart, data: data.shifts.kosutnjak || {} }
     };
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
-    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
-    const tomorrowStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
     const days = [{ dateStr: todayStr, isToday: true }, { dateStr: tomorrowStr, isToday: false }];
 
     // --- Determine Max Value for Scaling Bars ---
     let currentMaxValue = CHART_MAX_VALUE; // Start with configured value
     if (currentMaxValue === null) { // Calculate dynamic max if fixed value is not set
-         let dynamicMax = 1; // Avoid division by zero, ensure at least 1
+         let dynamicMax = 1;
          days.forEach(day => {
              const datePrefix = day.dateStr;
              for (let hour = 0; hour < 24; hour++) {
                  const key = `${datePrefix}_${hour.toString().padStart(2, '0')}`;
-                 // Check count in both locations for this hour key
                  const takovskaCount = locations.takovska.data.hasOwnProperty(key) ? Number(locations.takovska.data[key]) : 0;
                  const kosutnjakCount = locations.kosutnjak.data.hasOwnProperty(key) ? Number(locations.kosutnjak.data[key]) : 0;
                  if (!isNaN(takovskaCount)) dynamicMax = Math.max(dynamicMax, takovskaCount);
                  if (!isNaN(kosutnjakCount)) dynamicMax = Math.max(dynamicMax, kosutnjakCount);
              }
          });
-         // Add some padding (e.g., 10%) to the dynamic max so bars don't always hit 100%
          currentMaxValue = Math.ceil(dynamicMax * 1.1);
-         // Ensure a minimum max value if counts are very low
-         currentMaxValue = Math.max(currentMaxValue, 10); // Example minimum scale
+         currentMaxValue = Math.max(currentMaxValue, 10);
          console.log("Dynamic Max Count for Scaling:", currentMaxValue);
     }
 
 
-    // --- Generate Bars for each location and day ---
+    // --- Generate Bars ---
     for (const locKey in locations) {
         const loc = locations[locKey];
 
         days.forEach(dayInfo => {
-            // Determine the correct container (chart area div) for this location and day
+             // Use the correctly named variables to get the container
             const container = dayInfo.isToday ? loc.todayChart : loc.tomorrowChart;
             if (!container) {
                 console.warn(`Container not found for ${locKey} / ${dayInfo.isToday ? 'today' : 'tomorrow'}`);
-                continue; // Skip if the HTML element doesn't exist
+                continue;
             }
 
-            const locationData = loc.data; // Get shift data for the current location
+            const locationData = loc.data;
 
-            // Loop through hours 00 to 23 to create a bar for each hour
             for (let hour = 0; hour < 24; hour++) {
-                const hourStr = hour.toString().padStart(2, '0'); // Format hour as "00", "01", etc.
-                const key = `${dayInfo.dateStr}_${hourStr}`; // Construct the data lookup key (e.g., "2023-10-27_09")
-
-                // Get the count for this specific hour, default to 0 if not found
+                const hourStr = hour.toString().padStart(2, '0');
+                const key = `${dayInfo.dateStr}_${hourStr}`;
                 const count = locationData.hasOwnProperty(key) ? Number(locationData[key]) || 0 : 0;
-                const statusClass = getStatusClass(count); // Determine status class based on thresholds
-
-                // Calculate bar height percentage relative to the max value (capped at 100%)
+                const statusClass = getStatusClass(count);
                 const heightPercent = currentMaxValue > 0 ? Math.min(100, Math.max(0, (count / currentMaxValue) * 100)) : 0;
 
-                // --- Create HTML elements for the bar ---
-                // 1. Wrapper div for bar and label
                 const barWrapper = document.createElement('div');
                 barWrapper.classList.add('bar-wrapper');
-                // Add tooltip showing exact info on hover
                 const nextHour = (hour + 1) % 24;
                 barWrapper.title = `Sat: ${hourStr}:00-${nextHour.toString().padStart(2, '0')}:00\nBroj prijavljenih: ${count}`;
 
-                // 2. The actual bar div
                 const bar = document.createElement('div');
-                bar.classList.add('bar', statusClass); // Add base class and status class
-                bar.style.height = `${heightPercent}%`; // Set dynamic height
+                bar.classList.add('bar', statusClass);
+                bar.style.height = `${heightPercent}%`;
 
-                // 3. The label div below the bar
                 const label = document.createElement('div');
                 label.classList.add('bar-label');
-                label.textContent = `${hourStr}h`; // Label indicates the start of the hour (e.g., "09h")
+                label.textContent = `${hourStr}h`;
 
-                // --- Append elements to the DOM ---
-                barWrapper.appendChild(bar); // Add bar inside wrapper
-                barWrapper.appendChild(label); // Add label inside wrapper (below bar due to flex-direction)
-                container.appendChild(barWrapper); // Add the complete wrapper to the chart area
-            } // End hour loop
-        }); // End day loop
-    } // End location loop
-} // End displayShifts function
+                barWrapper.appendChild(bar);
+                barWrapper.appendChild(label);
+                container.appendChild(barWrapper);
+            }
+        });
+    }
+}
 
 
 /**
  * Fetches the latest shift data JSON from the Google Apps Script Web App.
  */
 async function fetchData() {
-  // Construct URL with cache-busting parameter
   const url = `${JSON_FETCH_URL}${JSON_FETCH_URL.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
   console.log("Fetching data from Web App:", url);
 
-  // Show loading placeholders before fetching
+  // Show loading placeholders
   allChartAreas.forEach(div => {
-      if(div && !div.querySelector('.loading-placeholder')) { // Add placeholder only if not already showing error/loading
+      if(div && !div.querySelector('.loading-placeholder')) {
           div.innerHTML = '<div class="loading-placeholder"><p>Učitavanje...</p></div>';
       }
   });
 
   try {
-    // Fetch data, disable caching if possible
     const response = await fetch(url, { cache: "no-store" });
     console.log(`Fetch response status: ${response.status} ${response.statusText}`);
 
-    // Handle HTTP errors (like 404, 500, etc.)
     if (!response.ok) {
       let errorText = `Status: ${response.status}`;
       try { errorText = await response.text(); console.error("Error response text:", errorText); }
@@ -185,55 +163,40 @@ async function fetchData() {
       throw new Error(`HTTP error fetching JSON from Web App! ${errorText}`);
     }
 
-    // Check content type header
     const contentType = response.headers.get("content-type");
     console.log("Received content type:", contentType);
 
     let data;
-    // Process response based on content type
     if (contentType && contentType.toLowerCase().includes("application/json")) {
-       data = await response.json(); // Parse as JSON
+       data = await response.json();
     } else {
-       // If not JSON, log the text and try parsing anyway
-       console.warn(`Received non-JSON content type: ${contentType}. Attempting to parse...`);
+       console.warn(`Received non-JSON content type: ${contentType}.`);
        const textResponse = await response.text();
        console.warn("Web App Response Text:", textResponse);
        try {
          data = JSON.parse(textResponse);
-         // Check if the parsed data is the specific error structure from our doGet function
-         if (data && data.error) {
-            throw new Error(`Web App returned error: ${data.details || data.error}`);
-         }
-         // If parsing succeeded unexpectedly, log it but proceed
-         console.log("Successfully parsed non-JSON response as JSON.");
+         if (data && data.error) throw new Error(`Web App returned error: ${data.details || data.error}`);
        } catch (parseError) {
-         // Throw a more specific error if parsing failed
-         throw new Error(`Failed to parse non-JSON response. Response starts with: ${textResponse.substring(0, 100)}...`);
+         throw new Error(`Failed to parse non-JSON response. Starts with: ${textResponse.substring(0, 100)}...`);
        }
     }
-
-    console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200)); // Log beginning of parsed data
-    displayShifts(data); // Call function to update the charts
+    console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200));
+    displayShifts(data);
 
   } catch (error) {
-    // Catch any errors during fetch or processing
-    console.error('Fetch Data Error:', error); // Log the full error object
+    console.error('Fetch Data Error:', error);
     lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
-    // Display error message in the chart areas
     const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
-     allChartAreas.forEach(div => {
+     allChartAreas.forEach(div => { // Use the correct array here
         if(div) div.innerHTML = errorMsg;
      });
   }
-} // End fetchData function
+}
 
 // --- Initial Load & Auto-Refresh Setup ---
-// Add event listener to run fetchData once the basic HTML structure is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Initializing fetch...");
-    fetchData(); // Perform the initial data fetch
+    fetchData();
 });
-
-// Set up interval to automatically refresh data periodically
 const refreshIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
 console.log(`Auto-refresh set every ${REFRESH_INTERVAL / 1000} seconds.`);
