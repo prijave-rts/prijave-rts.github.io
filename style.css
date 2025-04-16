@@ -77,9 +77,11 @@ header #last-updated {
     padding: 15px; /* Reduced padding slightly */
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    flex: 1 1 45%; /* Try to fit two side-by-side on larger screens */
-    min-width: 320px; /* Minimum width before wrapping */
+    flex: 1 1 48%; /* Try to fit two locations side-by-side */
+    min-width: 350px; /* Adjust min-width */
     margin-bottom: 20px;
+    display: flex; /* Use flexbox for location content */
+    flex-direction: column;
 }
 
 .location h2 {
@@ -91,86 +93,100 @@ header #last-updated {
     font-size: 1.3em;
 }
 
-/* --- Timeline View Styles --- */
-.timeline-view {
-    display: flex; /* Place Today and Tomorrow columns side-by-side */
-    gap: 15px; /* Space between Today and Tomorrow columns */
-    justify-content: space-around; /* Distribute space */
+/* --- Chart Styles --- */
+.chart-days-container {
+    display: flex;
+    gap: 20px; /* Space between Today and Tomorrow charts */
+    flex-grow: 1; /* Allow chart areas to take available space */
 }
 
-.day-column {
-    flex: 1; /* Each column takes equal space */
-    min-width: 140px; /* Minimum width for a column */
+.day-chart {
+    flex: 1; /* Each day chart takes equal space */
+    display: flex;
+    flex-direction: column; /* Stack title above chart area */
+    min-width: 150px; /* Minimum width for a day's chart */
 }
 
-.day-column h3 {
+.day-chart h3 {
     text-align: center;
-    font-size: 1.1em; /* Slightly larger day title */
-    color: #555;
+    font-size: 1.1em;
+    color: #333;
     margin-bottom: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px dashed #ccc;
+    border-bottom: 1px solid #eee;
     font-weight: bold;
 }
 
-.hours-container {
-    border: 1px solid #e0e0e0; /* Slightly darker border */
-    background-color: #fdfdfd;
-    border-radius: 3px; /* Slight rounding */
-    overflow: hidden; /* Ensure borders contain blocks */
+.chart-area {
+    display: flex; /* Arrange bars horizontally */
+    align-items: flex-end; /* Align bars to the bottom */
+    height: 200px; /* Fixed height for the chart drawing area */
+    border: 1px solid #ccc;
+    border-top-width: 0; /* Remove top border if day title has bottom border */
+    padding: 0 5px 5px 5px; /* Padding around bars, esp. at bottom */
+    gap: 2px; /* Space between bars */
+    flex-grow: 1; /* Allow chart area to fill vertical space in .day-chart */
+    position: relative; /* For placeholder positioning */
+    background-color: #f9f9f9; /* Light background for chart */
+    border-radius: 0 0 3px 3px; /* Round bottom corners */
 }
 
-/* Individual Hour Block */
-.hour-block {
-    height: 28px; /* Height of each hour slot */
-    border-bottom: 1px solid #f0f0f0; /* Lighter separator line */
+.loading-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Pushes count to the right */
-    padding: 0 8px; /* Padding inside the block */
-    font-size: 0.85em; /* Smaller font size for hour blocks */
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent overlay */
+    z-index: 10; /* Ensure it's above potential bars during load */
+    border-radius: 0 0 3px 3px; /* Match parent rounding */
 }
 
-/* Remove bottom border from the very last block in a container */
-.hours-container > .hour-block:last-child {
-    border-bottom: none;
-}
-
-.hour-block .hour-label {
-    color: #777; /* Grey color for the time label */
-    white-space: nowrap; /* Prevent time label from wrapping */
-}
-
-.hour-block .hour-count {
-    font-weight: bold;
-    font-size: 1.1em; /* Slightly larger count */
-    margin-left: 5px; /* Space between label and count */
-    min-width: 20px; /* Ensure space for count */
-    text-align: right; /* Align count to the right */
-}
-
-/* --- Status Colors for Timeline View --- */
-/* Apply background color to the entire block */
-.hour-block.status-critical { background-color: #ffdddd; }
-.hour-block.status-low { background-color: #fff5dd; }
-.hour-block.status-ok { background-color: #ddffdd; }
-
-/* Apply specific text colors to the count within the block */
-.status-critical .hour-count { color: #a60000; } /* Dark Red */
-.status-low .hour-count { color: #a67c00; }      /* Dark Yellow/Orange */
-.status-ok .hour-count { color: #006400; }        /* Dark Green */
-
-/* Loading/Error states within hours-container */
-.hours-container p {
-    padding: 20px;
-    text-align: center;
+.loading-placeholder p {
     color: #888;
     font-style: italic;
-    font-size: 0.9em;
 }
 
 
-/* Footer & Legend */
+.bar-wrapper {
+    flex: 1; /* Distribute space equally among bars */
+    display: flex;
+    flex-direction: column; /* Stack bar and label vertically */
+    align-items: center; /* Center bar and label horizontally */
+    justify-content: flex-end; /* Align bar to bottom */
+    position: relative; /* For tooltips or potential future elements */
+    min-width: 10px; /* Minimum width for a bar wrapper */
+}
+
+.bar {
+    width: 80%; /* Bar width relative to its wrapper */
+    background-color: #ccc; /* Default bar color */
+    transition: height 0.3s ease-out; /* Smooth height transition */
+    cursor: default; /* Indicate it's interactive (for tooltip) */
+    border-radius: 2px 2px 0 0; /* Slight rounding at the top */
+}
+
+/* Set background color based on status */
+.bar.status-critical { background-color: #e74c3c; } /* Red */
+.bar.status-low { background-color: #f39c12; }      /* Orange/Yellow */
+.bar.status-ok { background-color: #2ecc71; }        /* Green */
+
+/* Optional: Add a subtle border or effect */
+.bar:hover {
+   opacity: 0.85;
+}
+
+.bar-label {
+    font-size: 0.65em; /* Very small label */
+    color: #666;
+    margin-top: 4px; /* Space between bar bottom and label */
+    white-space: nowrap; /* Prevent label wrapping */
+}
+
+/* --- Footer & Legend Styles --- */
 footer {
     margin-top: 30px;
     padding-top: 20px;
@@ -199,42 +215,43 @@ footer {
     padding: 4px 8px;
     margin: 3px;
     display: inline-block;
-    border: 1px solid; /* Border color will be inherited */
+    border: 1px solid;
     border-radius: 4px;
     font-size: 0.85em;
     font-weight: bold;
     color: #333; /* Default text color */
 }
 
-/* Apply background/border colors to legend spans */
-.legend .status-critical { background-color: #ffdddd; border-color: #ffaaaa; }
-.legend .status-low { background-color: #fff5dd; border-color: #ffeca9; }
-.legend .status-ok { background-color: #ddffdd; border-color: #aaffaa; }
+/* Apply background/border colors to legend spans using bar colors */
+.legend .status-critical { background-color: #e74c3c; border-color: #c0392b; color: white;}
+.legend .status-low { background-color: #f39c12; border-color: #e67e22; color: white;}
+.legend .status-ok { background-color: #2ecc71; border-color: #27ae60; color: white;}
 
 footer p {
     margin-top: 10px;
     font-size: 0.95em;
 }
 
-/* --- REMOVED OLD GRID STYLES --- */
-/*
-.shifts-grid { ... }
-.shift-hour { ... }
-.shift-hour .time { ... }
-.shift-hour .count { ... }
-.shifts-grid p { ... }
-*/
-
-/* Optional: Add media queries for better responsiveness if needed */
-@media (max-width: 700px) {
+/* --- Media Query Examples --- */
+@media (max-width: 800px) {
     .location {
-        flex-basis: 90%; /* Make location take more width on smaller screens */
+        flex-basis: 95%; /* Make location take more width */
     }
-    .timeline-view {
-        flex-direction: column; /* Stack Today/Tomorrow vertically on very small screens */
-        gap: 25px; /* Increase gap when stacked */
+}
+@media (max-width: 450px) {
+     .chart-days-container {
+        flex-direction: column; /* Stack Today/Tomorrow */
+        gap: 30px;
     }
-     .day-column {
-        min-width: 100%; /* Take full width when stacked */
+     .day-chart {
+        min-width: 100%; /* Day takes full width when stacked */
     }
+    .bar-label {
+        font-size: 0.6em; /* Even smaller label */
+    }
+     .bar {
+        width: 70%; /* Slightly narrower bars on mobile */
+    }
+    header h1 { font-size: 1.5em; } /* Smaller title on mobile */
+    .cta-button { font-size: 1em; padding: 10px 20px; }
 }
