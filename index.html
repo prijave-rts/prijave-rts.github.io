@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Čuvari Istine - Status Blokade RTS</title>
+    <meta name="description" content="Pratite popunjenost smena za blokadu RTS-a i prijavite se da pomognete!">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Čuvari Istine - Status Blokade RTS</h1>
+        <p>Pridruži se mirnoj blokadi dok se ne ispuni zahtev za izbor novog, nezavisnog REM-a!</p>
+        <p>Stanje ažurirano: <strong id="last-updated">Učitavanje...</strong></p>
+        <a href="https://forms.gle/2CPVgWgM8YUW5TkQ7" target="_blank" class="cta-button">PRIJAVI SE ZA SMENU OVDE!</a>
+    </header>
+
+    <main class="locations-container">
+        <section class="location">
+            <h2>RTS Takovska 10</h2>
+            <div id="takovska-shifts" class="shifts-grid">
+                <p>Učitavanje smena...</p>
+            </div>
+        </section>
+        <section class="location">
+            <h2>RTS Košutnjak</h2>
+            <div id="kosutnjak-shifts" class="shifts-grid">
+                <p>Učitavanje smena...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="legend">
+            <h3>Legenda:</h3>
+            <span class="status-critical">KRITIČNO (<50)</span>
+            <span class="status-low">NISKO (50-150)</span>
+            <span class="status-ok">DOVOLJNO (>150)</span>
+            <p>(Broj ljudi po satu. Pragovi su okvirni.)</p>
+        </div>
+        <p>Napomena: Ovo su samo prijavljeni ljudi. Uvek je potrebno više!</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
