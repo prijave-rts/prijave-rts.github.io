@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const WEB_APP_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; // IMPORTANT: Replace with your actual URL
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec'; // IMPORTANT: Replace with your actual URL
 const JSON_FETCH_URL = WEB_APP_URL;
 
 // Thresholds for status colors (match the legend in index.html)
