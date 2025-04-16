@@ -1,8 +1,8 @@
 // --- CONFIGURATION --- (Keep as before)
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec';
 const JSON_FETCH_URL = WEB_APP_URL;
-const CRITICAL_THRESHOLD = 50;
-const LOW_THRESHOLD = 150;
+const CRITICAL_THRESHOLD = 150;
+const LOW_THRESHOLD = 300;
 const REFRESH_INTERVAL = 300000;
 const CHART_MAX_VALUE = LOW_THRESHOLD + 50;
 // const CHART_MAX_VALUE = null; // Enable for dynamic max
