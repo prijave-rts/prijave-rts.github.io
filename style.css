@@ -1,5 +1,10 @@
 /* Basic Reset & Body */
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     line-height: 1.6;
@@ -17,9 +22,29 @@ header {
     margin-bottom: 20px;
     border-radius: 5px;
 }
-header h1 { margin-bottom: 10px; }
-header p { margin-bottom: 15px; }
-header #last-updated { font-weight: normal; color: #ccc; }
+
+header h1 {
+    margin-bottom: 10px;
+    font-size: 1.8em; /* Slightly larger title */
+}
+
+header p {
+    margin-bottom: 15px;
+    max-width: 800px; /* Limit width of instruction text */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header p strong {
+    color: #ffdd57; /* Highlight important parts */
+}
+
+header #last-updated {
+    font-weight: normal;
+    color: #ccc;
+    font-size: 0.9em;
+}
+
 .cta-button {
     display: inline-block;
     background-color: #e74c3c; /* Red color */
@@ -29,96 +54,187 @@ header #last-updated { font-weight: normal; color: #ccc; }
     border-radius: 5px;
     font-weight: bold;
     transition: background-color 0.3s ease;
+    margin-top: 10px; /* Add some space above button */
+    font-size: 1.1em;
 }
-.cta-button:hover { background-color: #c0392b; }
+
+.cta-button:hover {
+    background-color: #c0392b;
+}
 
 /* Main Layout */
 .locations-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allow locations to wrap on smaller screens */
     gap: 20px;
     justify-content: center;
 }
+
+/* Individual Location Styling */
 .location {
     background-color: #fff;
     border: 1px solid #ddd;
-    padding: 20px;
+    padding: 15px; /* Reduced padding slightly */
     border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    /* Adjust width for different screen sizes if needed */
-    flex: 1 1 400px; /* Flex-grow, flex-shrink, flex-basis */
-    min-width: 300px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex: 1 1 45%; /* Try to fit two side-by-side on larger screens */
+    min-width: 320px; /* Minimum width before wrapping */
+    margin-bottom: 20px;
 }
+
 .location h2 {
     text-align: center;
     margin-bottom: 15px;
-    color: #555;
+    color: #333;
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
+    font-size: 1.3em;
 }
 
-/* Shifts Grid */
-.shifts-grid {
-    display: grid;
-    /* Responsive columns: min 70px wide, max 1fr */
-    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-    gap: 8px; /* Gap between grid items */
-    margin-top: 10px;
+/* --- Timeline View Styles --- */
+.timeline-view {
+    display: flex; /* Place Today and Tomorrow columns side-by-side */
+    gap: 15px; /* Space between Today and Tomorrow columns */
+    justify-content: space-around; /* Distribute space */
 }
-.shift-hour {
-    border: 1px solid #eee;
-    padding: 8px 5px; /* More padding top/bottom */
+
+.day-column {
+    flex: 1; /* Each column takes equal space */
+    min-width: 140px; /* Minimum width for a column */
+}
+
+.day-column h3 {
     text-align: center;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    font-size: 0.9em; /* Slightly smaller base font */
-    min-height: 70px; /* Ensure consistent height */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Pushes count down */
-}
-.shift-hour .time {
+    font-size: 1.1em; /* Slightly larger day title */
+    color: #555;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #ccc;
     font-weight: bold;
-    display: block;
-    font-size: 0.85em; /* Smaller time font */
-    color: #666;
-    margin-bottom: 5px;
-}
-.shift-hour .count {
-    font-size: 1.4em; /* Larger count */
-    font-weight: bold;
-    display: block;
 }
 
-/* Status Colors (Adjust thresholds in JS) */
-.status-critical { background-color: #ffdddd; border-color: #ffaaaa; color: #8B0000; /* Dark Red */ }
-.status-low { background-color: #fff5dd; border-color: #ffeca9; color: #8B6914; /* Dark Yellow/Orange */ }
-.status-ok { background-color: #ddffdd; border-color: #aaffaa; color: #006400; /* Dark Green */ }
+.hours-container {
+    border: 1px solid #e0e0e0; /* Slightly darker border */
+    background-color: #fdfdfd;
+    border-radius: 3px; /* Slight rounding */
+    overflow: hidden; /* Ensure borders contain blocks */
+}
+
+/* Individual Hour Block */
+.hour-block {
+    height: 28px; /* Height of each hour slot */
+    border-bottom: 1px solid #f0f0f0; /* Lighter separator line */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Pushes count to the right */
+    padding: 0 8px; /* Padding inside the block */
+    font-size: 0.85em; /* Smaller font size for hour blocks */
+}
+
+/* Remove bottom border from the very last block in a container */
+.hours-container > .hour-block:last-child {
+    border-bottom: none;
+}
+
+.hour-block .hour-label {
+    color: #777; /* Grey color for the time label */
+    white-space: nowrap; /* Prevent time label from wrapping */
+}
+
+.hour-block .hour-count {
+    font-weight: bold;
+    font-size: 1.1em; /* Slightly larger count */
+    margin-left: 5px; /* Space between label and count */
+    min-width: 20px; /* Ensure space for count */
+    text-align: right; /* Align count to the right */
+}
+
+/* --- Status Colors for Timeline View --- */
+/* Apply background color to the entire block */
+.hour-block.status-critical { background-color: #ffdddd; }
+.hour-block.status-low { background-color: #fff5dd; }
+.hour-block.status-ok { background-color: #ddffdd; }
+
+/* Apply specific text colors to the count within the block */
+.status-critical .hour-count { color: #a60000; } /* Dark Red */
+.status-low .hour-count { color: #a67c00; }      /* Dark Yellow/Orange */
+.status-ok .hour-count { color: #006400; }        /* Dark Green */
+
+/* Loading/Error states within hours-container */
+.hours-container p {
+    padding: 20px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
 
 /* Footer & Legend */
 footer {
     margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
     text-align: center;
     font-size: 0.9em;
     color: #555;
 }
-.legend { margin-bottom: 10px; }
-.legend h3 { margin-bottom: 5px; font-size: 1em; }
+
+.legend {
+    margin-bottom: 15px;
+    display: inline-block; /* Center the legend box */
+    padding: 10px;
+    border: 1px solid #eee;
+    background-color: #fff;
+    border-radius: 4px;
+}
+
+.legend h3 {
+    margin-bottom: 8px;
+    font-size: 1em;
+    text-align: center;
+}
+
 .legend span {
     padding: 4px 8px;
     margin: 3px;
     display: inline-block;
-    border: 1px solid;
+    border: 1px solid; /* Border color will be inherited */
     border-radius: 4px;
     font-size: 0.85em;
     font-weight: bold;
+    color: #333; /* Default text color */
 }
-footer p { margin-top: 5px; }
 
-/* Loading/Error States */
-.shifts-grid p {
-    grid-column: 1 / -1; /* Span all columns */
-    text-align: center;
-    color: #888;
-    padding: 20px;
+/* Apply background/border colors to legend spans */
+.legend .status-critical { background-color: #ffdddd; border-color: #ffaaaa; }
+.legend .status-low { background-color: #fff5dd; border-color: #ffeca9; }
+.legend .status-ok { background-color: #ddffdd; border-color: #aaffaa; }
+
+footer p {
+    margin-top: 10px;
+    font-size: 0.95em;
+}
+
+/* --- REMOVED OLD GRID STYLES --- */
+/*
+.shifts-grid { ... }
+.shift-hour { ... }
+.shift-hour .time { ... }
+.shift-hour .count { ... }
+.shifts-grid p { ... }
+*/
+
+/* Optional: Add media queries for better responsiveness if needed */
+@media (max-width: 700px) {
+    .location {
+        flex-basis: 90%; /* Make location take more width on smaller screens */
+    }
+    .timeline-view {
+        flex-direction: column; /* Stack Today/Tomorrow vertically on very small screens */
+        gap: 25px; /* Increase gap when stacked */
+    }
+     .day-column {
+        min-width: 100%; /* Take full width when stacked */
+    }
 }
