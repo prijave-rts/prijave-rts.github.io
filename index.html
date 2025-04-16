@@ -10,43 +10,48 @@
 <body>
     <header>
         <h1>Blokade RTS - status po smenama</h1>
+        <!-- Keep the rest of your header content -->
         <p>Pridruži se mirnoj blokadi dok se ne ispuni zahtev za izbor novog, nezavisnog REM-a!</p>
-        <p><strong>VAŽNO UPUTSTVO:</strong> Molimo vas, prijavljujte putem forme samo smene za koje ste <strong>SIGURNI</strong> da ćete doći, kako bismo imali što tačniji pregled potreba. Pogledajte tabelu ispod i pokušajte da se prijavite za termine gde je broj ljudi najmanji (crveni i žuti slotovi) – solidarnost je ključna!</p>
+        <p><strong>VAŽNO UPUTSTVO:</strong> Molimo vas, prijavljujte putem forme samo smene za koje ste <strong>SIGURNI</strong> da ćete doći, kako bismo imali što tačniji pregled potreba. Pogledajte grafikon ispod i pokušajte da se prijavite za termine gde je broj ljudi najmanji (crvene i žute trake) – solidarnost je ključna!</p>
         <p>Stanje ažurirano: <strong id="last-updated">Učitavanje...</strong></p>
         <a href="https://forms.gle/2CPVgWgM8YUW5TkQ7" target="_blank" class="cta-button">PRIJAVI SE ZA SMENU OVDE!</a>
     </header>
 
-        <main class="locations-container">
+    <main class="locations-container">
         <section class="location">
             <h2>RTS Takovska 10</h2>
-            <div class="timeline-view">
-                <div class="day-column">
+            <div class="chart-days-container"> <!-- New container for days -->
+                <div class="day-chart">
                     <h3>Danas</h3>
-                    <div class="hours-container" id="takovska-today">
-                        <p>Učitavanje...</p> <!-- Placeholder -->
+                    <div class="chart-area" id="takovska-today-chart">
+                        <!-- Bars will be injected here -->
+                        <div class="loading-placeholder"><p>Učitavanje...</p></div>
                     </div>
                 </div>
-                <div class="day-column">
+                <div class="day-chart">
                     <h3>Sutra</h3>
-                    <div class="hours-container" id="takovska-tomorrow">
-                        <p>Učitavanje...</p> <!-- Placeholder -->
+                    <div class="chart-area" id="takovska-tomorrow-chart">
+                        <!-- Bars will be injected here -->
+                        <div class="loading-placeholder"><p>Učitavanje...</p></div>
                     </div>
                 </div>
             </div>
         </section>
         <section class="location">
             <h2>RTS Košutnjak</h2>
-            <div class="timeline-view">
-                <div class="day-column">
+             <div class="chart-days-container"> <!-- New container for days -->
+                <div class="day-chart">
                     <h3>Danas</h3>
-                    <div class="hours-container" id="kosutnjak-today">
-                        <p>Učitavanje...</p> <!-- Placeholder -->
+                    <div class="chart-area" id="kosutnjak-today-chart">
+                        <!-- Bars will be injected here -->
+                         <div class="loading-placeholder"><p>Učitavanje...</p></div>
                     </div>
                 </div>
-                <div class="day-column">
+                <div class="day-chart">
                     <h3>Sutra</h3>
-                    <div class="hours-container" id="kosutnjak-tomorrow">
-                        <p>Učitavanje...</p> <!-- Placeholder -->
+                    <div class="chart-area" id="kosutnjak-tomorrow-chart">
+                        <!-- Bars will be injected here -->
+                         <div class="loading-placeholder"><p>Učitavanje...</p></div>
                     </div>
                 </div>
             </div>
@@ -54,6 +59,7 @@
     </main>
 
     <footer>
+        <!-- Keep your existing footer -->
         <div class="legend">
             <h3>Legenda:</h3>
             <span class="status-critical">KRITIČNO (<50)</span>
