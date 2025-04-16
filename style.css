@@ -164,12 +164,14 @@ header #last-updated {
     min-width: 9px; /* Adjust for smaller label */
 }
 
+/* Find this rule in your style.css */
 .bar {
-    width: 70%; /* Adjusted bar width */
-    background-color: #ccc;
-    transition: height 0.3s ease-out;
-    cursor: default;
-    border-radius: 2px 2px 0 0;
+    width: 70%; /* Or your current width */
+    background-color: #ccc; /* Default bar color */
+    transition: height 0.3s ease-out; /* Smooth height transition */
+    cursor: default; /* Indicate it's interactive (for tooltip) */
+    border-radius: 2px 2px 0 0; /* Slight rounding at the top */
+    min-height: 2px; /* ADD THIS LINE - Ensures a minimum visibility */
 }
 
 /* Status colors for bars */
