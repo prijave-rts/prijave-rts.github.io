@@ -25,18 +25,18 @@ header {
 
 header h1 {
     margin-bottom: 10px;
-    font-size: 1.8em;
+    font-size: 1.8em; /* Slightly larger title */
 }
 
 header p {
     margin-bottom: 15px;
-    max-width: 800px;
+    max-width: 800px; /* Limit width of instruction text */
     margin-left: auto;
     margin-right: auto;
 }
 
 header p strong {
-    color: #ffdd57;
+    color: #ffdd57; /* Highlight important parts */
 }
 
 header #last-updated {
@@ -47,14 +47,14 @@ header #last-updated {
 
 .cta-button {
     display: inline-block;
-    background-color: #e74c3c;
+    background-color: #e74c3c; /* Red color */
     color: #fff;
     padding: 12px 25px;
     text-decoration: none;
     border-radius: 5px;
     font-weight: bold;
     transition: background-color 0.3s ease;
-    margin-top: 10px;
+    margin-top: 10px; /* Add some space above button */
     font-size: 1.1em;
 }
 
@@ -65,7 +65,7 @@ header #last-updated {
 /* Main Layout */
 .locations-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Allow locations to wrap on smaller screens */
     gap: 20px;
     justify-content: center;
 }
@@ -77,11 +77,11 @@ header #last-updated {
     padding: 15px;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    flex: 1 1 48%; /* Adjust flex-basis for desired width */
-    min-width: 350px;
+    flex: 1 1 48%; /* Try to fit two locations side-by-side */
+    min-width: 350px; /* Adjust min-width */
     margin-bottom: 20px;
     display: flex;
-    flex-direction: column; /* Keep location content vertical */
+    flex-direction: column;
 }
 
 .location h2 {
@@ -94,21 +94,15 @@ header #last-updated {
 }
 
 /* --- Chart Styles --- */
-
-/* REMOVED .chart-days-container styles */
-
+/* Container for Today/Tomorrow charts (stacks vertically by default) */
 .day-chart {
-    /* flex: 1; No longer needed as it's block layout */
     display: flex;
     flex-direction: column;
-    /* Add margin between Today and Tomorrow sections */
     margin-bottom: 20px;
 }
-/* Remove margin from the last day-chart within a location */
 .location > .day-chart:last-child {
     margin-bottom: 0;
 }
-
 
 .day-chart h3 {
     text-align: center;
@@ -116,62 +110,63 @@ header #last-updated {
     color: #333;
     margin-bottom: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #eee; /* Keep border under day title */
+    border-bottom: 1px solid #eee;
     font-weight: bold;
 }
 
 .chart-area {
     display: flex;
     align-items: flex-end;
-    height: 200px;
+    height: 200px; /* Fixed height */
     border: 1px solid #ccc;
-    /* border-top-width: 0; Can keep or remove, title border serves separation */
-    padding: 0 5px 5px 5px;
+    padding: 5px 5px 5px 5px; /* Add top padding */
     gap: 2px;
-    /* flex-grow: 1; Not strictly needed now, height is fixed */
     position: relative;
     background-color: #f9f9f9;
-    border-radius: 3px; /* Apply rounding */
+    border-radius: 3px;
 }
 
 .loading-placeholder {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
     background-color: rgba(255, 255, 255, 0.8);
     z-index: 10;
     border-radius: 3px;
 }
+.loading-placeholder p { color: #888; font-style: italic; }
 
-.loading-placeholder p {
-    color: #888;
-    font-style: italic;
-}
-
-
+/* Wrapper for count, bar, and label */
 .bar-wrapper {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
+    flex-direction: column; /* Stack count, bar, label */
+    align-items: center; /* Center horizontally */
+    justify-content: flex-end; /* Align content (bottom of label) to bottom */
     position: relative;
-    min-width: 9px; /* Adjust for smaller label */
+    min-width: 10px; /* Minimum width for the wrapper */
 }
 
-/* Find this rule in your style.css */
+/* The numerical count above the bar */
+.bar-count-value {
+    font-size: 0.65em; /* Small font size */
+    font-weight: bold;
+    color: #555; /* Dark grey color */
+    text-align: center;
+    line-height: 1; /* Prevent extra spacing */
+    width: 100%; /* Allow centering */
+    margin-bottom: 2px; /* Space between number and bar top */
+    height: 1em; /* Reserve space even if empty, adjust if needed */
+}
+
+/* The actual bar */
 .bar {
-    width: 70%; /* Or your current width */
-    background-color: #ccc; /* Default bar color */
-    transition: height 0.3s ease-out; /* Smooth height transition */
-    cursor: default; /* Indicate it's interactive (for tooltip) */
-    border-radius: 2px 2px 0 0; /* Slight rounding at the top */
-    min-height: 2px; /* ADD THIS LINE - Ensures a minimum visibility */
+    width: 70%; /* Bar width relative to wrapper */
+    background-color: #ccc; /* Default */
+    transition: height 0.3s ease-out;
+    cursor: default;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px; /* Minimum visible height */
 }
 
 /* Status colors for bars */
@@ -179,78 +174,33 @@ header #last-updated {
 .bar.status-low { background-color: #f39c12; }
 .bar.status-ok { background-color: #2ecc71; }
 
-.bar:hover {
-   opacity: 0.85;
-}
+.bar:hover { opacity: 0.85; }
 
+/* The hour label below the bar */
 .bar-label {
-    font-size: 0.55em; /* Adjusted smaller font size */
+    font-size: 0.55em;
     color: #666;
-    margin-top: 2px; /* Adjusted margin */
+    margin-top: 2px;
     white-space: nowrap;
-    line-height: 1; /* Ensure compact line height */
+    line-height: 1;
 }
 
 /* --- Footer & Legend Styles (Keep as before) --- */
-footer {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-    text-align: center;
-    font-size: 0.9em;
-    color: #555;
-}
-
-.legend {
-    margin-bottom: 15px;
-    display: inline-block;
-    padding: 10px;
-    border: 1px solid #eee;
-    background-color: #fff;
-    border-radius: 4px;
-}
-
-.legend h3 {
-    margin-bottom: 8px;
-    font-size: 1em;
-    text-align: center;
-}
-
-.legend span {
-    padding: 4px 8px;
-    margin: 3px;
-    display: inline-block;
-    border: 1px solid;
-    border-radius: 4px;
-    font-size: 0.85em;
-    font-weight: bold;
-    color: #333;
-}
-
+footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 0.9em; color: #555; }
+.legend { margin-bottom: 15px; display: inline-block; padding: 10px; border: 1px solid #eee; background-color: #fff; border-radius: 4px; }
+.legend h3 { margin-bottom: 8px; font-size: 1em; text-align: center; }
+.legend span { padding: 4px 8px; margin: 3px; display: inline-block; border: 1px solid; border-radius: 4px; font-size: 0.85em; font-weight: bold; color: #333; }
 .legend .status-critical { background-color: #e74c3c; border-color: #c0392b; color: white;}
 .legend .status-low { background-color: #f39c12; border-color: #e67e22; color: white;}
 .legend .status-ok { background-color: #2ecc71; border-color: #27ae60; color: white;}
+footer p { margin-top: 10px; font-size: 0.95em; }
 
-footer p {
-    margin-top: 10px;
-    font-size: 0.95em;
-}
-
-
-/* --- Media Query Examples (Adjust as needed) --- */
-@media (max-width: 800px) {
-    .location {
-        flex-basis: 95%; /* Location takes more width */
-    }
-}
-/* No need for the media query that stacked day-charts, as they stack by default now */
+/* --- Media Query Examples (Keep as before) --- */
+@media (max-width: 800px) { .location { flex-basis: 95%; } }
 @media (max-width: 450px) {
-     .bar-label {
-        font-size: 0.5em; /* Even smaller label on very small screens */
-    }
-     .bar {
-        width: 65%; /* Slightly narrower bars */
-    }
-    header h1 { font-size: 1.4em; }
-    .cta-button { font-size: 0.9em; padding: 8px 15px; }
+     .bar-label { font-size: 0.5em; }
+     .bar { width: 65%; }
+     .bar-count-value { font-size: 0.6em; } /* Adjust count size on mobile */
+     header h1 { font-size: 1.4em; }
+     .cta-button { font-size: 0.9em; padding: 8px 15px; }
 }
