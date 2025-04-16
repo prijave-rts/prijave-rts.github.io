@@ -1,267 +1,239 @@
 // --- CONFIGURATION ---
-// --- NEW CONFIGURATION ---
-// IMPORTANT: Replace this with the actual Web App URL you got after deploying the Apps Script
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec'; // The URL ending in /exec
-const JSON_FETCH_URL = WEB_APP_URL; // Use the Web App URL directly
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec'; // IMPORTANT: Replace with your actual URL
+const JSON_FETCH_URL = WEB_APP_URL;
 
-// Define thresholds for status colors (match the legend in index.html)
-const CRITICAL_THRESHOLD = 150; // Example: Below 150 is critical
-const LOW_THRESHOLD = 300;      // Example: Between 150 and 300 is low
+// Thresholds for status colors (match the legend in index.html)
+const CRITICAL_THRESHOLD = 50;
+const LOW_THRESHOLD = 150;
 
 // Refresh interval in milliseconds (e.g., 5 minutes = 300000)
 const REFRESH_INTERVAL = 300000;
+
+// Chart Scaling Configuration
+// Option 1: Fixed Max Value (provides consistent scale)
+const CHART_MAX_VALUE = LOW_THRESHOLD + 500; // e.g., 200 - Adjust if counts often exceed this
+// Option 2: Dynamic Max Value (set CHART_MAX_VALUE = null; below to enable)
+// const CHART_MAX_VALUE = null;
+
 // --- END CONFIGURATION ---
 
 // Get references to HTML elements
-const takovskaGrid = document.getElementById('takovska-shifts');
-const kosutnjakGrid = document.getElementById('kosutnjak-shifts');
+const takovskaTodayChart = document.getElementById('takovska-today-chart');
+const takovskaTomorrowChart = document.getElementById('takovska-tomorrow-chart');
+const kosutnjakTodayChart = document.getElementById('kosutnjak-today-chart');
+const kosutnjakTomorrowChart = document.getElementById('kosutnjak-tomorrow-chart');
 const lastUpdatedSpan = document.getElementById('last-updated');
+const allChartAreas = [takovskaTodayChart, takovskaTomorrowChart, kosutnjakTodayChart, kosutnjakTomorrowChart];
 
 /**
  * Determines the CSS class based on the count and thresholds.
  * @param {number} count - The number of people signed up for the hour.
- * @returns {string} - The CSS class name ('status-critical', 'status-low', 'status-ok').
+ * @returns {string} - The CSS class name ('status-critical', 'status-low', 'status-ok', or 'status-unknown').
  */
 function getStatusClass(count) {
-  // Ensure count is treated as a number
   const numericCount = Number(count);
-  if (isNaN(numericCount)) {
-    return 'status-unknown'; // Optional: Add a style for unknown status
-  }
-
-  if (numericCount < CRITICAL_THRESHOLD) {
-    return 'status-critical';
-  } else if (numericCount < LOW_THRESHOLD) {
-    return 'status-low';
-  } else {
-    return 'status-ok';
-  }
+  if (isNaN(numericCount)) return 'status-unknown'; // Should not happen with default 0
+  if (numericCount < CRITICAL_THRESHOLD) return 'status-critical';
+  if (numericCount < LOW_THRESHOLD) return 'status-low';
+  return 'status-ok';
 }
 
 /**
- * Formats the time key for display.
- * Example: "2025-03-21_09" -> "21. Mar<br>09-10č"
- * @param {string} key - The time key (e.g., "YYYY-MM-DD_HH").
- * @returns {string} - Formatted HTML string for display.
- */
-function formatTimeKey(key) {
-    try {
-        // Validate key format before splitting
-        if (!/^\d{4}-\d{2}-\d{2}_\d{2}$/.test(key)) {
-            console.error("Invalid time key format:", key);
-            return key; // Return raw key if format is wrong
-        }
-
-        const [dateStr, hourStr] = key.split('_');
-        // Attempt to create a date object - use UTC to avoid timezone issues during parsing
-        // Or ensure the server (Apps Script) outputs in a consistent timezone/format
-        const date = new Date(dateStr + 'T' + hourStr + ':00:00');
-        if (isNaN(date.getTime())) {
-             console.error("Invalid date created from key:", key);
-             return key; // Return raw key if date is invalid
-        }
-
-        const displayHour = parseInt(hourStr, 10);
-        const nextHour = (displayHour + 1) % 24;
-
-        // Serbian month names
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Avg", "Sep", "Okt", "Nov", "Dec"];
-        const day = date.getDate();
-        const month = monthNames[date.getMonth()];
-
-        // Pad hours with leading zero if needed
-        const startHourFormatted = displayHour.toString().padStart(2, '0');
-        const endHourFormatted = nextHour.toString().padStart(2, '0');
-
-        return `${day}. ${month}<br>${startHourFormatted}-${endHourFormatted}č`;
-    } catch (e) {
-        console.error("Error formatting time key:", key, e);
-        return key; // Fallback to raw key on any error
-    }
-}
-
-
-/**
- * Updates the display grids with fetched shift data.
+ * Updates the display charts with fetched shift data as horizontal bars.
  * @param {object} data - The parsed JSON data object containing shift info.
  */
 function displayShifts(data) {
-  // Basic validation of the incoming data structure
-  if (!data || typeof data !== 'object' || typeof data.shifts !== 'object' || typeof data.lastUpdated !== 'string') {
-    console.error("Invalid or incomplete data structure received:", data);
-    takovskaGrid.innerHTML = '<p>Greška: Podaci nisu u očekivanom formatu. [E1]</p>';
-    kosutnjakGrid.innerHTML = '<p>Greška: Podaci nisu u očekivanom formatu. [E1]</p>';
-    lastUpdatedSpan.textContent = "Greška";
-    return;
-  }
-
-  // Update last updated time safely
-  try {
-      const updatedDate = new Date(data.lastUpdated);
-      if (isNaN(updatedDate.getTime())) {
-          lastUpdatedSpan.textContent = "Nevažeći datum";
-      } else {
-          lastUpdatedSpan.textContent = updatedDate.toLocaleString('sr-RS', { dateStyle: 'medium', timeStyle: 'short' });
-      }
-  } catch {
-      lastUpdatedSpan.textContent = "N/A";
-  }
-
-
-  // Clear previous grid content
-  takovskaGrid.innerHTML = '';
-  kosutnjakGrid.innerHTML = '';
-
-  const locations = ['takovska', 'kosutnjak'];
-  const grids = { takovska: takovskaGrid, kosutnjak: kosutnjakGrid };
-
-  // Aggregate all valid keys from both locations in the data
-  let allKeys = new Set();
-  if (data.shifts.takovska && typeof data.shifts.takovska === 'object') {
-      Object.keys(data.shifts.takovska)
-          .filter(key => /^\d{4}-\d{2}-\d{2}_\d{2}$/.test(key)) // Ensure valid format
-          .forEach(key => allKeys.add(key));
-  }
-  if (data.shifts.kosutnjak && typeof data.shifts.kosutnjak === 'object') {
-      Object.keys(data.shifts.kosutnjak)
-          .filter(key => /^\d{4}-\d{2}-\d{2}_\d{2}$/.test(key)) // Ensure valid format
-          .forEach(key => allKeys.add(key));
-  }
-
-  // Sort the keys chronologically
-  const sortedKeys = Array.from(allKeys).sort();
-
-  // Handle case where there are no valid keys/shifts
-  if (sortedKeys.length === 0) {
-      const noDataMsg = '<p>Trenutno nema prijavljenih smena za prikaz.</p>';
-      takovskaGrid.innerHTML = noDataMsg;
-      kosutnjakGrid.innerHTML = noDataMsg;
-      console.log("No valid shift keys found in data.");
-      return;
-  }
-
-  // Populate grids for each location
-  locations.forEach(loc => {
-    const grid = grids[loc];
-    if (!grid) {
-        console.error(`Grid element for location '${loc}' not found.`);
-        return; // Safety check
+    // --- Basic Data Validation ---
+    if (!data || typeof data !== 'object' || typeof data.shifts !== 'object' || typeof data.lastUpdated !== 'string') {
+        console.error("Invalid or incomplete data structure received:", data);
+        const errorMsg = '<div class="loading-placeholder"><p>Greška: Podaci nisu u očekivanom formatu. [E1]</p></div>';
+        allChartAreas.forEach(div => { if (div) div.innerHTML = errorMsg; });
+        lastUpdatedSpan.textContent = "Greška";
+        return;
     }
 
-    // Make sure the location exists in the data, even if empty
-    const locationShifts = (data.shifts[loc] && typeof data.shifts[loc] === 'object') ? data.shifts[loc] : {};
+    // --- Update Timestamp ---
+    try {
+        const updatedDate = new Date(data.lastUpdated);
+        lastUpdatedSpan.textContent = isNaN(updatedDate.getTime()) ? "Nevažeći datum" : updatedDate.toLocaleString('sr-RS', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+        lastUpdatedSpan.textContent = "N/A";
+    }
 
-    sortedKeys.forEach(key => {
-        // Default count to 0 if key doesn't exist for this location
-        const count = locationShifts.hasOwnProperty(key) ? locationShifts[key] : 0;
-        const statusClass = getStatusClass(count);
-        const formattedTime = formatTimeKey(key); // Format the time key for display
-
-        const hourDiv = document.createElement('div');
-        hourDiv.classList.add('shift-hour', statusClass);
-        // Use textContent for security unless HTML is explicitly needed and sanitized
-        // hourDiv.textContent = `Time: ${formattedTime}, Count: ${count}`; // Simpler text version
-
-        // Using innerHTML as before, assuming formatTimeKey is safe
-         hourDiv.innerHTML = `
-             <span class="time">${formattedTime}</span>
-             <span class="count">${count}</span>
-         `;
-
-        grid.appendChild(hourDiv);
+    // --- Clear Previous Content & Placeholders ---
+     allChartAreas.forEach(div => {
+        if (div) {
+            div.innerHTML = ''; // Clear previous bars and placeholders
+        }
      });
-  });
-}
+
+
+    // --- Prepare Data and Dates ---
+    const locations = {
+        takovska: { todayChart: takovskaTodayChart, tomorrowChart: takovskaTomorrowChart, data: data.shifts.takovska || {} },
+        kosutnjak: { todayChart: kosutnjakTodayChart, tomorrowChart: kosutnjakTomorrowChart, data: data.shifts.kosutnjak || {} }
+    };
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const tomorrowStr = tomorrow.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const days = [{ dateStr: todayStr, isToday: true }, { dateStr: tomorrowStr, isToday: false }];
+
+    // --- Determine Max Value for Scaling Bars ---
+    let currentMaxValue = CHART_MAX_VALUE; // Start with configured value
+    if (currentMaxValue === null) { // Calculate dynamic max if fixed value is not set
+         let dynamicMax = 1; // Avoid division by zero, ensure at least 1
+         days.forEach(day => {
+             const datePrefix = day.dateStr;
+             for (let hour = 0; hour < 24; hour++) {
+                 const key = `${datePrefix}_${hour.toString().padStart(2, '0')}`;
+                 // Check count in both locations for this hour key
+                 const takovskaCount = locations.takovska.data.hasOwnProperty(key) ? Number(locations.takovska.data[key]) : 0;
+                 const kosutnjakCount = locations.kosutnjak.data.hasOwnProperty(key) ? Number(locations.kosutnjak.data[key]) : 0;
+                 if (!isNaN(takovskaCount)) dynamicMax = Math.max(dynamicMax, takovskaCount);
+                 if (!isNaN(kosutnjakCount)) dynamicMax = Math.max(dynamicMax, kosutnjakCount);
+             }
+         });
+         // Add some padding (e.g., 10%) to the dynamic max so bars don't always hit 100%
+         currentMaxValue = Math.ceil(dynamicMax * 1.1);
+         // Ensure a minimum max value if counts are very low
+         currentMaxValue = Math.max(currentMaxValue, 10); // Example minimum scale
+         console.log("Dynamic Max Count for Scaling:", currentMaxValue);
+    }
+
+
+    // --- Generate Bars for each location and day ---
+    for (const locKey in locations) {
+        const loc = locations[locKey];
+
+        days.forEach(dayInfo => {
+            // Determine the correct container (chart area div) for this location and day
+            const container = dayInfo.isToday ? loc.todayChart : loc.tomorrowChart;
+            if (!container) {
+                console.warn(`Container not found for ${locKey} / ${dayInfo.isToday ? 'today' : 'tomorrow'}`);
+                continue; // Skip if the HTML element doesn't exist
+            }
+
+            const locationData = loc.data; // Get shift data for the current location
+
+            // Loop through hours 00 to 23 to create a bar for each hour
+            for (let hour = 0; hour < 24; hour++) {
+                const hourStr = hour.toString().padStart(2, '0'); // Format hour as "00", "01", etc.
+                const key = `${dayInfo.dateStr}_${hourStr}`; // Construct the data lookup key (e.g., "2023-10-27_09")
+
+                // Get the count for this specific hour, default to 0 if not found
+                const count = locationData.hasOwnProperty(key) ? Number(locationData[key]) || 0 : 0;
+                const statusClass = getStatusClass(count); // Determine status class based on thresholds
+
+                // Calculate bar height percentage relative to the max value (capped at 100%)
+                const heightPercent = currentMaxValue > 0 ? Math.min(100, Math.max(0, (count / currentMaxValue) * 100)) : 0;
+
+                // --- Create HTML elements for the bar ---
+                // 1. Wrapper div for bar and label
+                const barWrapper = document.createElement('div');
+                barWrapper.classList.add('bar-wrapper');
+                // Add tooltip showing exact info on hover
+                const nextHour = (hour + 1) % 24;
+                barWrapper.title = `Sat: ${hourStr}:00-${nextHour.toString().padStart(2, '0')}:00\nBroj prijavljenih: ${count}`;
+
+                // 2. The actual bar div
+                const bar = document.createElement('div');
+                bar.classList.add('bar', statusClass); // Add base class and status class
+                bar.style.height = `${heightPercent}%`; // Set dynamic height
+
+                // 3. The label div below the bar
+                const label = document.createElement('div');
+                label.classList.add('bar-label');
+                label.textContent = `${hourStr}h`; // Label indicates the start of the hour (e.g., "09h")
+
+                // --- Append elements to the DOM ---
+                barWrapper.appendChild(bar); // Add bar inside wrapper
+                barWrapper.appendChild(label); // Add label inside wrapper (below bar due to flex-direction)
+                container.appendChild(barWrapper); // Add the complete wrapper to the chart area
+            } // End hour loop
+        }); // End day loop
+    } // End location loop
+} // End displayShifts function
 
 
 /**
  * Fetches the latest shift data JSON from the Google Apps Script Web App.
  */
 async function fetchData() {
-  // Add a cache-busting query parameter to the URL
+  // Construct URL with cache-busting parameter
   const url = `${JSON_FETCH_URL}${JSON_FETCH_URL.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+  console.log("Fetching data from Web App:", url);
 
-  console.log("Fetching data from Web App:", url); // Log the URL being fetched
+  // Show loading placeholders before fetching
+  allChartAreas.forEach(div => {
+      if(div && !div.querySelector('.loading-placeholder')) { // Add placeholder only if not already showing error/loading
+          div.innerHTML = '<div class="loading-placeholder"><p>Učitavanje...</p></div>';
+      }
+  });
 
   try {
-    // Fetch options - consider timeout if needed
-    const response = await fetch(url, { cache: "no-store" }); // Try to force no caching
+    // Fetch data, disable caching if possible
+    const response = await fetch(url, { cache: "no-store" });
+    console.log(`Fetch response status: ${response.status} ${response.statusText}`);
 
-    console.log(`Fetch response status: ${response.status} ${response.statusText}`); // Log status
-
+    // Handle HTTP errors (like 404, 500, etc.)
     if (!response.ok) {
-      // Attempt to read error text from response if possible
       let errorText = `Status: ${response.status}`;
-      try {
-        errorText = await response.text();
-        console.error("Error response text:", errorText);
-      } catch (textError) {
-         console.error("Could not read error response text.");
-      }
+      try { errorText = await response.text(); console.error("Error response text:", errorText); }
+      catch (textError) { console.error("Could not read error response text."); }
       throw new Error(`HTTP error fetching JSON from Web App! ${errorText}`);
     }
 
-    // Check content type more robustly
+    // Check content type header
     const contentType = response.headers.get("content-type");
     console.log("Received content type:", contentType);
 
     let data;
+    // Process response based on content type
     if (contentType && contentType.toLowerCase().includes("application/json")) {
-       data = await response.json();
+       data = await response.json(); // Parse as JSON
     } else {
-       // If not JSON, log the text and attempt to parse, handle potential errors
-       console.warn(`Received non-JSON content type: ${contentType}.`);
+       // If not JSON, log the text and try parsing anyway
+       console.warn(`Received non-JSON content type: ${contentType}. Attempting to parse...`);
        const textResponse = await response.text();
        console.warn("Web App Response Text:", textResponse);
        try {
          data = JSON.parse(textResponse);
-         // Check if it's the specific error structure from our doGet function
+         // Check if the parsed data is the specific error structure from our doGet function
          if (data && data.error) {
-           throw new Error(`Web App returned error: ${data.details || data.error}`);
+            throw new Error(`Web App returned error: ${data.details || data.error}`);
          }
+         // If parsing succeeded unexpectedly, log it but proceed
+         console.log("Successfully parsed non-JSON response as JSON.");
        } catch (parseError) {
-         // Throw specific error if parsing failed after non-JSON content type warning
-         throw new Error(`Failed to parse non-JSON response from Web App. Starts with: ${textResponse.substring(0, 100)}...`);
+         // Throw a more specific error if parsing failed
+         throw new Error(`Failed to parse non-JSON response. Response starts with: ${textResponse.substring(0, 100)}...`);
        }
     }
 
-    console.log("Parsed data:", data); // Log the parsed data
-    displayShifts(data); // Update the display with potentially parsed non-JSON data if successful
+    console.log("Parsed data snippet:", JSON.stringify(data).substring(0, 200)); // Log beginning of parsed data
+    displayShifts(data); // Call function to update the charts
 
   } catch (error) {
+    // Catch any errors during fetch or processing
     console.error('Fetch Data Error:', error); // Log the full error object
     lastUpdatedSpan.textContent = 'Greška pri ažuriranju.';
-    // Display more informative error on the page if possible
-     const errorMsg = `<p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 3]</p>`;
-     // Avoid replacing grid if it already has data from a previous successful fetch
-     if (!takovskaGrid.hasChildNodes() || takovskaGrid.textContent.includes('Učitavanje') || takovskaGrid.textContent.includes('Greška')) {
-         takovskaGrid.innerHTML = errorMsg;
-         kosutnjakGrid.innerHTML = errorMsg;
-     }
+    // Display error message in the chart areas
+    const errorMsg = `<div class="loading-placeholder"><p>Nije moguće učitati podatke. Greška: ${error.message}. Pokušajte ponovo kasnije. [GREŠKA 5]</p></div>`;
+     allChartAreas.forEach(div => {
+        if(div) div.innerHTML = errorMsg;
+     });
   }
-}
+} // End fetchData function
 
-// --- Initial Load & Auto-Refresh ---
-// Perform the initial fetch when the page loads
+// --- Initial Load & Auto-Refresh Setup ---
+// Add event listener to run fetchData once the basic HTML structure is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded. Initializing fetch...");
-    fetchData(); // Perform initial fetch
+    fetchData(); // Perform the initial data fetch
 });
 
-// Set up automatic refresh at the specified interval
-// Ensure interval only starts after the first fetch attempt (or success) if needed,
-// but usually starting it immediately is fine.
+// Set up interval to automatically refresh data periodically
 const refreshIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
 console.log(`Auto-refresh set every ${REFRESH_INTERVAL / 1000} seconds.`);
-
-// Optional: Clear interval if the page is hidden to save resources
-// document.addEventListener("visibilitychange", () => {
-//   if (document.hidden) {
-//     clearInterval(refreshIntervalId);
-//      console.log("Page hidden, refresh paused.");
-//   } else {
-//      fetchData(); // Fetch immediately when visible again
-//      refreshIntervalId = setInterval(fetchData, REFRESH_INTERVAL);
-//      console.log("Page visible, refresh resumed.");
-//   }
-// });
