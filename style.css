@@ -25,18 +25,18 @@ header {
 
 header h1 {
     margin-bottom: 10px;
-    font-size: 1.8em; /* Slightly larger title */
+    font-size: 1.8em;
 }
 
 header p {
     margin-bottom: 15px;
-    max-width: 800px; /* Limit width of instruction text */
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
 }
 
 header p strong {
-    color: #ffdd57; /* Highlight important parts */
+    color: #ffdd57;
 }
 
 header #last-updated {
@@ -47,14 +47,14 @@ header #last-updated {
 
 .cta-button {
     display: inline-block;
-    background-color: #e74c3c; /* Red color */
+    background-color: #e74c3c;
     color: #fff;
     padding: 12px 25px;
     text-decoration: none;
     border-radius: 5px;
     font-weight: bold;
     transition: background-color 0.3s ease;
-    margin-top: 10px; /* Add some space above button */
+    margin-top: 10px;
     font-size: 1.1em;
 }
 
@@ -65,7 +65,7 @@ header #last-updated {
 /* Main Layout */
 .locations-container {
     display: flex;
-    flex-wrap: wrap; /* Allow locations to wrap on smaller screens */
+    flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
 }
@@ -74,14 +74,14 @@ header #last-updated {
 .location {
     background-color: #fff;
     border: 1px solid #ddd;
-    padding: 15px; /* Reduced padding slightly */
+    padding: 15px;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    flex: 1 1 48%; /* Try to fit two locations side-by-side */
-    min-width: 350px; /* Adjust min-width */
+    flex: 1 1 48%; /* Adjust flex-basis for desired width */
+    min-width: 350px;
     margin-bottom: 20px;
-    display: flex; /* Use flexbox for location content */
-    flex-direction: column;
+    display: flex;
+    flex-direction: column; /* Keep location content vertical */
 }
 
 .location h2 {
@@ -94,18 +94,21 @@ header #last-updated {
 }
 
 /* --- Chart Styles --- */
-.chart-days-container {
-    display: flex;
-    gap: 20px; /* Space between Today and Tomorrow charts */
-    flex-grow: 1; /* Allow chart areas to take available space */
-}
+
+/* REMOVED .chart-days-container styles */
 
 .day-chart {
-    flex: 1; /* Each day chart takes equal space */
+    /* flex: 1; No longer needed as it's block layout */
     display: flex;
-    flex-direction: column; /* Stack title above chart area */
-    min-width: 150px; /* Minimum width for a day's chart */
+    flex-direction: column;
+    /* Add margin between Today and Tomorrow sections */
+    margin-bottom: 20px;
 }
+/* Remove margin from the last day-chart within a location */
+.location > .day-chart:last-child {
+    margin-bottom: 0;
+}
+
 
 .day-chart h3 {
     text-align: center;
@@ -113,22 +116,22 @@ header #last-updated {
     color: #333;
     margin-bottom: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #eee; /* Keep border under day title */
     font-weight: bold;
 }
 
 .chart-area {
-    display: flex; /* Arrange bars horizontally */
-    align-items: flex-end; /* Align bars to the bottom */
-    height: 200px; /* Fixed height for the chart drawing area */
+    display: flex;
+    align-items: flex-end;
+    height: 200px;
     border: 1px solid #ccc;
-    border-top-width: 0; /* Remove top border if day title has bottom border */
-    padding: 0 5px 5px 5px; /* Padding around bars, esp. at bottom */
-    gap: 2px; /* Space between bars */
-    flex-grow: 1; /* Allow chart area to fill vertical space in .day-chart */
-    position: relative; /* For placeholder positioning */
-    background-color: #f9f9f9; /* Light background for chart */
-    border-radius: 0 0 3px 3px; /* Round bottom corners */
+    /* border-top-width: 0; Can keep or remove, title border serves separation */
+    padding: 0 5px 5px 5px;
+    gap: 2px;
+    /* flex-grow: 1; Not strictly needed now, height is fixed */
+    position: relative;
+    background-color: #f9f9f9;
+    border-radius: 3px; /* Apply rounding */
 }
 
 .loading-placeholder {
@@ -140,9 +143,9 @@ header #last-updated {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent overlay */
-    z-index: 10; /* Ensure it's above potential bars during load */
-    border-radius: 0 0 3px 3px; /* Match parent rounding */
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 10;
+    border-radius: 3px;
 }
 
 .loading-placeholder p {
@@ -152,41 +155,41 @@ header #last-updated {
 
 
 .bar-wrapper {
-    flex: 1; /* Distribute space equally among bars */
+    flex: 1;
     display: flex;
-    flex-direction: column; /* Stack bar and label vertically */
-    align-items: center; /* Center bar and label horizontally */
-    justify-content: flex-end; /* Align bar to bottom */
-    position: relative; /* For tooltips or potential future elements */
-    min-width: 10px; /* Minimum width for a bar wrapper */
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    min-width: 9px; /* Adjust for smaller label */
 }
 
 .bar {
-    width: 80%; /* Bar width relative to its wrapper */
-    background-color: #ccc; /* Default bar color */
-    transition: height 0.3s ease-out; /* Smooth height transition */
-    cursor: default; /* Indicate it's interactive (for tooltip) */
-    border-radius: 2px 2px 0 0; /* Slight rounding at the top */
+    width: 70%; /* Adjusted bar width */
+    background-color: #ccc;
+    transition: height 0.3s ease-out;
+    cursor: default;
+    border-radius: 2px 2px 0 0;
 }
 
-/* Set background color based on status */
-.bar.status-critical { background-color: #e74c3c; } /* Red */
-.bar.status-low { background-color: #f39c12; }      /* Orange/Yellow */
-.bar.status-ok { background-color: #2ecc71; }        /* Green */
+/* Status colors for bars */
+.bar.status-critical { background-color: #e74c3c; }
+.bar.status-low { background-color: #f39c12; }
+.bar.status-ok { background-color: #2ecc71; }
 
-/* Optional: Add a subtle border or effect */
 .bar:hover {
    opacity: 0.85;
 }
 
 .bar-label {
-    font-size: 0.65em; /* Very small label */
+    font-size: 0.55em; /* Adjusted smaller font size */
     color: #666;
-    margin-top: 4px; /* Space between bar bottom and label */
-    white-space: nowrap; /* Prevent label wrapping */
+    margin-top: 2px; /* Adjusted margin */
+    white-space: nowrap;
+    line-height: 1; /* Ensure compact line height */
 }
 
-/* --- Footer & Legend Styles --- */
+/* --- Footer & Legend Styles (Keep as before) --- */
 footer {
     margin-top: 30px;
     padding-top: 20px;
@@ -198,7 +201,7 @@ footer {
 
 .legend {
     margin-bottom: 15px;
-    display: inline-block; /* Center the legend box */
+    display: inline-block;
     padding: 10px;
     border: 1px solid #eee;
     background-color: #fff;
@@ -219,10 +222,9 @@ footer {
     border-radius: 4px;
     font-size: 0.85em;
     font-weight: bold;
-    color: #333; /* Default text color */
+    color: #333;
 }
 
-/* Apply background/border colors to legend spans using bar colors */
 .legend .status-critical { background-color: #e74c3c; border-color: #c0392b; color: white;}
 .legend .status-low { background-color: #f39c12; border-color: #e67e22; color: white;}
 .legend .status-ok { background-color: #2ecc71; border-color: #27ae60; color: white;}
@@ -232,26 +234,21 @@ footer p {
     font-size: 0.95em;
 }
 
-/* --- Media Query Examples --- */
+
+/* --- Media Query Examples (Adjust as needed) --- */
 @media (max-width: 800px) {
     .location {
-        flex-basis: 95%; /* Make location take more width */
+        flex-basis: 95%; /* Location takes more width */
     }
 }
+/* No need for the media query that stacked day-charts, as they stack by default now */
 @media (max-width: 450px) {
-     .chart-days-container {
-        flex-direction: column; /* Stack Today/Tomorrow */
-        gap: 30px;
-    }
-     .day-chart {
-        min-width: 100%; /* Day takes full width when stacked */
-    }
-    .bar-label {
-        font-size: 0.6em; /* Even smaller label */
+     .bar-label {
+        font-size: 0.5em; /* Even smaller label on very small screens */
     }
      .bar {
-        width: 70%; /* Slightly narrower bars on mobile */
+        width: 65%; /* Slightly narrower bars */
     }
-    header h1 { font-size: 1.5em; } /* Smaller title on mobile */
-    .cta-button { font-size: 1em; padding: 10px 20px; }
+    header h1 { font-size: 1.4em; }
+    .cta-button { font-size: 0.9em; padding: 8px 15px; }
 }
