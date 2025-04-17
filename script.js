@@ -1,5 +1,5 @@
 // --- CONFIGURATION --- (Keep as before)
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVuFfG4M7QZQoKyHJCO6KRWjQHTO9YI_nFxedK9VTQDNGxZ1xy69aLWYcz4XdSQS-H/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyRmJ_fmdxYW8TrcxIImpZyGcsTwu4qBmz2t3qWjfzCe7-n0wBgWpl_Bc1X4pET2O6h/exec';
 const JSON_FETCH_URL = WEB_APP_URL;
 const CRITICAL_THRESHOLD = 150;
 const LOW_THRESHOLD = 300;
