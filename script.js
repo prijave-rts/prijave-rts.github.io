@@ -2,7 +2,7 @@
 const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyRmJ_fmdxYW8TrcxIImpZyGcsTwu4qBmz2t3qWjfzCe7-n0wBgWpl_Bc1X4pET2O6h/exec';
 const JSON_FETCH_URL = WEB_APP_URL;
 const CRITICAL_THRESHOLD = 150;
-const LOW_THRESHOLD = 300;
+const LOW_THRESHOLD = 500;
 const REFRESH_INTERVAL = 300000;
 const CHART_MAX_VALUE = LOW_THRESHOLD + 50;
 // const CHART_MAX_VALUE = null; // Enable for dynamic max
